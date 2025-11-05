@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文本转语音工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+
+        .section {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .section-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #4a5568;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .icon {
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border-radius: 50%;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 14px;
+            line-height: 1.6;
+            resize: vertical;
+            transition: border-color 0.3s ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-weight: 500;
+            color: #4a5568;
+            font-size: 14px;
+        }
+
+        select, input[type="range"], input[type="file"] {
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .range-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .range-value {
+            min-width: 50px;
+            text-align: center;
+            padding: 5px 10px;
+            background: #f7fafc;
+            border-radius: 5px;
+            font-weight: 500;
+        }
+
+        .button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .button:active {
+            transform: translateY(0);
+        }
+
+        .button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-input {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-input-display {
+            background: #f7fafc;
+            border: 2px dashed #cbd5e0;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            color: #718096;
+            transition: all 0.3s ease;
+        }
+
+        .file-input-display:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .progress {
+            margin-top: 20px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            height: 8px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .status {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .status.success {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 1px solid #9ae6b4;
+        }
+
+        .status.error {
+            background: #fed7d7;
+            color: #742a2a;
+            border: 1px solid #fc8181;
+        }
+
+        .status.info {
+            background: #bee3f8;
+            color: #2a4365;
+            border: 1px solid #63b3ed;
+        }
+
+        .audio-list {
+            margin-top: 20px;
+        }
+
+        .audio-item {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+        }
+
+        .audio-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .audio-controls button {
+            background: #4299e1;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .audio-controls button:hover {
+            background: #3182ce;
+        }
+
+        .concurrent-info {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .concurrent-indicator {
+            width: 8px;
+            height: 8px;
+            background: #68d391;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+            
+            .controls {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>文本转语音工具</h1>
+        
+        <div class="concurrent-info">
+            <div class="concurrent-indicator"></div>
+            并发模式：同时处理3个音频片段，加速转换
+        </div>
+        
+        <div class="section">
+            <div class="section-title">
+                <div class="icon"></div>
+                文本输入
+            </div>
+            <textarea id="textInput" placeholder="请输入要转换的文本内容...&#10;&#10;支持长文本，系统会自动按500字切割处理"></textarea>
+            
+            <div class="file-input-wrapper">
+                <input type="file" id="fileInput" class="file-input" accept=".txt" multiple>
+                <div class="file-input-display">
+                    点击选择文本文件或拖拽到此处 (支持多选)
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">
+                <div class="icon"></div>
+                语音设置
+            </div>
+            <div class="controls">
+                <div class="control-group">
+                    <label>语音选择</label>
+                    <select id="voiceSelect">
+                        <optgroup label="女声">
+                            <option value="zh-CN-XiaoxiaoNeural">晓晓 (温美)</option>
+                            <option value="zh-CN-XiaoyiNeural">晓伊 (甜美)</option>
+                            <option value="zh-CN-XiaochenNeural">晓辰 (知性)</option>
+                            <option value="zh-CN-XiaohanNeural">晓涵 (优雅)</option>
+                            <option value="zh-CN-XiaomengNeural">晓梦 (梦幻)</option>
+                            <option value="zh-CN-XiaomoNeural">晓墨 (文艺)</option>
+                            <option value="zh-CN-XiaoqiuNeural">晓秋 (成熟)</option>
+                            <option value="zh-CN-XiaorouNeural">晓柔 (智慧)</option>
+                            <option value="zh-CN-XiaoshuangNeural">晓双 (活泼)</option>
+                            <option value="zh-CN-XiaoyanNeural">晓颜 (美美)</option>
+                            <option value="zh-CN-XiaoyouNeural">晓悠 (清新)</option>
+                            <option value="zh-CN-XiaozhenNeural">晓甄 (熟美)</option>
+                        </optgroup>
+                        <optgroup label="男声">
+                            <option value="zh-CN-YunxiNeural">云希 (清朗)</option>
+                            <option value="zh-CN-YunjianNeural">云健 (稳重)</option>
+                            <option value="zh-CN-YunfengNeural">云枫 (端庄)</option>
+                            <option value="zh-CN-YunhaoNeural">云皓 (豪迈)</option>
+                            <option value="zh-CN-YunxiaNeural">云夏 (阳光)</option>
+                            <option value="zh-CN-YunyangNeural">云扬 (清朗)</option>
+                            <option value="zh-CN-YunyeNeural">云野 (野性)</option>
+                            <option value="zh-CN-YunzeNeural">云泽 (然旧)</option>
+                            <option value="zh-CN-YunyangNeural">云洋 (深沉)</option>
+                            <option value="zh-CN-XiaochenNeural">晓宸 (知性)</option>
+                            <option value="zh-CN-YunyiNeural">云逸 (豪迈)</option>
+                            <option value="zh-CN-YunzheNeural">云哲 (智慧)</option>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label>语音风格</label>
+                    <select id="styleSelect">
+                        <option value="general">通用</option>
+                        <option value="cheerful">愉快</option>
+                        <option value="sad">悲伤</option>
+                        <option value="angry">愤怒</option>
+                        <option value="fearful">恐惧</option>
+                        <option value="disgruntled">不满</option>
+                        <option value="serious">严肃</option>
+                        <option value="gentle">温柔</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label>语速</label>
+                    <div class="range-container">
+                        <input type="range" id="speedRange" min="0.5" max="2" step="0.1" value="1">
+                        <div class="range-value" id="speedValue">1.0</div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>音调</label>
+                    <div class="range-container">
+                        <input type="range" id="pitchRange" min="-50" max="50" step="5" value="0">
+                        <div class="range-value" id="pitchValue">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">
+                <div class="icon"></div>
+                操作控制
+            </div>
+            <button class="button" id="convertBtn">
+                开始转换
+            </button>
+            
+            <div class="progress" id="progressContainer" style="display: none;">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            
+            <div id="status"></div>
+        </div>
+
+        <div class="section" id="audioSection" style="display: none;">
+            <div class="section-title">
+                <div class="icon"></div>
+                生成的音频
+            </div>
+            <div class="audio-list" id="audioList"></div>
+            <button class="button" id="downloadAllBtn" style="margin-top: 15px;">
+                合并下载音频
+            </button>
+        </div>
+    </div>
+
+    <script>
+        class TTSConverter {
+            constructor() {
+                this.apiUrl = 'https://tts-voice-magic.1007342268.workers.dev/v1/audio/speech';
+                this.maxChunkSize = 500;
+                this.maxConcurrency = 3; // 并发数设置为3
+                this.audioFiles = [];
+                this.audioContext = null;
+                this.initializeElements();
+                this.bindEvents();
+                this.initAudioContext();
+            }
+
+            initializeElements() {
+                this.elements = {
+                    textInput: document.getElementById('textInput'),
+                    fileInput: document.getElementById('fileInput'),
+                    voiceSelect: document.getElementById('voiceSelect'),
+                    styleSelect: document.getElementById('styleSelect'),
+                    speedRange: document.getElementById('speedRange'),
+                    pitchRange: document.getElementById('pitchRange'),
+                    speedValue: document.getElementById('speedValue'),
+                    pitchValue: document.getElementById('pitchValue'),
+                    convertBtn: document.getElementById('convertBtn'),
+                    progressContainer: document.getElementById('progressContainer'),
+                    progressBar: document.getElementById('progressBar'),
+                    status: document.getElementById('status'),
+                    audioSection: document.getElementById('audioSection'),
+                    audioList: document.getElementById('audioList'),
+                    downloadAllBtn: document.getElementById('downloadAllBtn')
+                };
+            }
+
+            async initAudioContext() {
+                try {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (error) {
+                    console.warn('无法初始化AudioContext，合并功能可能不可用:', error);
+                }
+            }
+
+            bindEvents() {
+                // 范围滑块事件
+                this.elements.speedRange.addEventListener('input', (e) => {
+                    this.elements.speedValue.textContent = e.target.value;
+                });
+
+                this.elements.pitchRange.addEventListener('input', (e) => {
+                    this.elements.pitchValue.textContent = e.target.value;
+                });
+
+                // 文件选择事件
+                this.elements.fileInput.addEventListener('change', (e) => {
+                    this.handleFileSelect(e.target.files);
+                });
+
+                // 拖拽事件
+                const fileInputDisplay = document.querySelector('.file-input-display');
+                fileInputDisplay.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    fileInputDisplay.style.borderColor = '#667eea';
+                });
+
+                fileInputDisplay.addEventListener('dragleave', (e) => {
+                    e.preventDefault();
+                    fileInputDisplay.style.borderColor = '#cbd5e0';
+                });
+
+                fileInputDisplay.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    fileInputDisplay.style.borderColor = '#cbd5e0';
+                    this.handleFileSelect(e.dataTransfer.files);
+                });
+
+                // 转换按钮事件
+                this.elements.convertBtn.addEventListener('click', () => {
+                    this.startConversion();
+                });
+
+                // 下载全部按钮事件
+                this.elements.downloadAllBtn.addEventListener('click', () => {
+                    this.downloadMergedAudio();
+                });
+            }
+
+            async handleFileSelect(files) {
+                const textFiles = Array.from(files).filter(file => file.type === 'text/plain');
+                
+                if (textFiles.length === 0) {
+                    this.showStatus('请选择有效的文本文件 (.txt)', 'error');
+                    return;
+                }
+
+                let combinedText = '';
+                for (const file of textFiles) {
+                    try {
+                        const text = await this.readFileAsText(file);
+                        combinedText += text + '\n\n';
+                    } catch (error) {
+                        this.showStatus(`读取文件 ${file.name} 失败: ${error.message}`, 'error');
+                    }
+                }
+
+                this.elements.textInput.value = combinedText.trim();
+                this.showStatus(`成功加载 ${textFiles.length} 个文件`, 'success');
+            }
+
+            readFileAsText(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = e => resolve(e.target.result);
+                    reader.onerror = e => reject(new Error('文件读取失败'));
+                    reader.readAsText(file, 'utf-8');
+                });
+            }
+
+            splitTextIntoChunks(text) {
+                const chunks = [];
+                const sentences = text.split(/[。！？.!?]/);
+                let currentChunk = '';
+
+                for (const sentence of sentences) {
+                    if (currentChunk.length + sentence.length > this.maxChunkSize) {
+                        if (currentChunk.trim()) {
+                            chunks.push(currentChunk.trim());
+                        }
+                        currentChunk = sentence;
+                    } else {
+                        currentChunk += sentence;
+                    }
+                }
+
+                if (currentChunk.trim()) {
+                    chunks.push(currentChunk.trim());
+                }
+
+                return chunks.filter(chunk => chunk.length > 0);
+            }
+
+            async convertTextToSpeech(text) {
+                const response = await fetch(this.apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        input: text,
+                        voice: this.elements.voiceSelect.value,
+                        speed: parseFloat(this.elements.speedRange.value),
+                        pitch: this.elements.pitchRange.value,
+                        style: this.elements.styleSelect.value
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API请求失败: ${response.status}`);
+                }
+
+                return await response.blob();
+            }
+
+            // 并发处理函数
+            async processConcurrently(chunks) {
+                const results = new Array(chunks.length);
+                let currentIndex = 0;
+                let completedCount = 0;
+
+                const processChunk = async (chunkIndex) => {
+                    try {
+                        const chunk = chunks[chunkIndex];
+                        this.showStatus(`正在处理第 ${chunkIndex + 1}/${chunks.length} 个片段 (并发模式)...`, 'info');
+                        
+                        const audioBlob = await this.convertTextToSpeech(chunk);
+                        const audioFile = {
+                            blob: audioBlob,
+                            name: `audio_${chunkIndex + 1}.mp3`,
+                            text: chunk.substring(0, 50) + (chunk.length > 50 ? '...' : ''),
+                            index: chunkIndex
+                        };
+                        
+                        results[chunkIndex] = audioFile;
+                        completedCount++;
+                        
+                        // 更新进度
+                        const progress = (completedCount / chunks.length) * 100;
+                        this.updateProgress(progress);
+                        
+                        return audioFile;
+                    } catch (error) {
+                        console.error(`转换第 ${chunkIndex + 1} 个片段失败:`, error);
+                        this.showStatus(`第 ${chunkIndex + 1} 个片段转换失败: ${error.message}`, 'error');
+                        completedCount++;
+                        return null;
+                    }
+                };
+
+                // 创建工作队列
+                const workers = [];
+                for (let i = 0; i < Math.min(this.maxConcurrency, chunks.length); i++) {
+                    workers.push(this.createWorker(chunks, processChunk, () => currentIndex++));
+                }
+
+                // 等待所有工作完成
+                await Promise.all(workers);
+                
+                return results.filter(result => result !== null);
+            }
+
+            async createWorker(chunks, processChunk, getNextIndex) {
+                while (true) {
+                    const index = getNextIndex();
+                    if (index >= chunks.length) break;
+                    
+                    await processChunk(index);
+                    
+                    // 添加间隔避免请求过快
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+            }
+
+            async startConversion() {
+                const text = this.elements.textInput.value.trim();
+                if (!text) {
+                    this.showStatus('请输入要转换的文本', 'error');
+                    return;
+                }
+
+                this.elements.convertBtn.disabled = true;
+                this.elements.convertBtn.innerHTML = '并发转换中...';
+                this.elements.progressContainer.style.display = 'block';
+                this.audioFiles = [];
+                this.elements.audioList.innerHTML = '';
+
+                try {
+                    const chunks = this.splitTextIntoChunks(text);
+                    this.showStatus(`文本已分割为 ${chunks.length} 个片段，启动 ${Math.min(this.maxConcurrency, chunks.length)} 个并发任务...`, 'info');
+
+                    // 使用并发处理
+                    const results = await this.processConcurrently(chunks);
+                    
+                    // 按顺序排序结果
+                    results.sort((a, b) => a.index - b.index);
+                    this.audioFiles = results;
+
+                    // 添加音频到列表
+                    results.forEach((audioFile, index) => {
+                        this.addAudioToList(audioFile, index);
+                    });
+
+                    if (this.audioFiles.length > 0) {
+                        this.showStatus(`并发转换完成！成功生成 ${this.audioFiles.length} 个音频文件`, 'success');
+                        this.elements.audioSection.style.display = 'block';
+                        
+                        // 如果只有一个文件，自动播放
+                        if (this.audioFiles.length === 1) {
+                            const audio = document.querySelector('.audio-item audio');
+                            if (audio) audio.play();
+                        }
+                    } else {
+                        this.showStatus('转换失败，未生成任何音频文件', 'error');
+                    }
+
+                } catch (error) {
+                    this.showStatus(`转换过程发生错误: ${error.message}`, 'error');
+                } finally {
+                    this.elements.convertBtn.disabled = false;
+                    this.elements.convertBtn.innerHTML = '开始转换';
+                    this.elements.progressContainer.style.display = 'none';
+                }
+            }
+
+            updateProgress(percentage) {
+                this.elements.progressBar.style.width = percentage + '%';
+            }
+
+            showStatus(message, type) {
+                this.elements.status.innerHTML = message;
+                this.elements.status.className = `status ${type}`;
+            }
+
+            addAudioToList(audioFile, index) {
+                const audioItem = document.createElement('div');
+                audioItem.className = 'audio-item';
+                
+                const audioUrl = URL.createObjectURL(audioFile.blob);
+                
+                audioItem.innerHTML = `
+                    <div>
+                        <strong>${audioFile.name}</strong>
+                        <br>
+                        <small>${audioFile.text}</small>
+                    </div>
+                    <audio controls style="max-width: 200px;">
+                        <source src="${audioUrl}" type="audio/mpeg">
+                    </audio>
+                    <div class="audio-controls">
+                        <button onclick="ttsConverter.downloadAudio(${index})">下载</button>
+                        <button onclick="ttsConverter.playAudio(${index})">播放</button>
+                    </div>
+                `;
+                
+                this.elements.audioList.appendChild(audioItem);
+            }
+
+            downloadAudio(index) {
+                const audioFile = this.audioFiles[index];
+                const url = URL.createObjectURL(audioFile.blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = audioFile.name;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+
+            playAudio(index) {
+                const audioItem = this.elements.audioList.children[index];
+                const audio = audioItem.querySelector('audio');
+                audio.currentTime = 0;
+                audio.play();
+            }
+
+            async downloadMergedAudio() {
+                if (this.audioFiles.length === 0) {
+                    this.showStatus('没有可下载的音频文件', 'error');
+                    return;
+                }
+
+                // 如果只有一个文件，直接下载
+                if (this.audioFiles.length === 1) {
+                    this.downloadAudio(0);
+                    return;
+                }
+
+                // 显示合并状态
+                this.showStatus('正在合并音频文件...', 'info');
+                this.elements.downloadAllBtn.disabled = true;
+                this.elements.downloadAllBtn.innerHTML = '合并中...';
+
+                try {
+                    const mergedAudio = await this.mergeAudioFiles();
+                    
+                    // 创建下载链接
+                    const blob = new Blob([mergedAudio], { type: 'audio/wav' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'merged_audio.wav';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+
+                    this.showStatus('音频文件合并并下载成功！', 'success');
+                } catch (error) {
+                    this.showStatus(`合并音频失败: ${error.message}`, 'error');
+                } finally {
+                    this.elements.downloadAllBtn.disabled = false;
+                    this.elements.downloadAllBtn.innerHTML = '合并下载音频';
+                }
+            }
+
+            async mergeAudioFiles() {
+                if (!this.audioContext) {
+                    throw new Error('AudioContext 不可用');
+                }
+
+                const audioBuffers = [];
+                
+                // 解码所有音频文件
+                for (let i = 0; i < this.audioFiles.length; i++) {
+                    const arrayBuffer = await this.audioFiles[i].blob.arrayBuffer();
+                    const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
+                    audioBuffers.push(audioBuffer);
+                }
+
+                // 计算总长度
+                const totalLength = audioBuffers.reduce((sum, buffer) => sum + buffer.length, 0);
+                const numberOfChannels = audioBuffers[0].numberOfChannels;
+                const sampleRate = audioBuffers[0].sampleRate;
+
+                // 创建合并后的音频缓冲区
+                const mergedBuffer = this.audioContext.createBuffer(numberOfChannels, totalLength, sampleRate);
+
+                let offset = 0;
+                for (const buffer of audioBuffers) {
+                    for (let channel = 0; channel < numberOfChannels; channel++) {
+                        mergedBuffer.getChannelData(channel).set(buffer.getChannelData(channel), offset);
+                    }
+                    offset += buffer.length;
+                }
+
+                // 转换为WAV格式
+                return this.audioBufferToWav(mergedBuffer);
+            }
+
+            audioBufferToWav(buffer) {
+                const numberOfChannels = buffer.numberOfChannels;
+                const sampleRate = buffer.sampleRate;
+                const format = 1; // PCM
+                const bitDepth = 16;
+
+                const bytesPerSample = bitDepth / 8;
+                const blockAlign = numberOfChannels * bytesPerSample;
+
+                const wavDataByteLength = buffer.length * blockAlign;
+                const headerByteLength = 44;
+                const totalLength = headerByteLength + wavDataByteLength;
+
+                const wavArrayBuffer = new ArrayBuffer(totalLength);
+                const view = new DataView(wavArrayBuffer);
+
+                // WAV头部
+                const writeString = (offset, string) => {
+                    for (let i = 0; i < string.length; i++) {
+                        view.setUint8(offset + i, string.charCodeAt(i));
+                    }
+                };
+
+                writeString(0, 'RIFF');
+                view.setUint32(4, totalLength - 8, true);
+                writeString(8, 'WAVE');
+                writeString(12, 'fmt ');
+                view.setUint32(16, 16, true);
+                view.setUint16(20, format, true);
+                view.setUint16(22, numberOfChannels, true);
+                view.setUint32(24, sampleRate, true);
+                view.setUint32(28, sampleRate * blockAlign, true);
+                view.setUint16(32, blockAlign, true);
+                view.setUint16(34, bitDepth, true);
+                writeString(36, 'data');
+                view.setUint32(40, wavDataByteLength, true);
+
+                // PCM数据
+                const channels = [];
+                for (let i = 0; i < numberOfChannels; i++) {
+                    channels.push(buffer.getChannelData(i));
+                }
+
+                let offset = 44;
+                for (let i = 0; i < buffer.length; i++) {
+                    for (let channel = 0; channel < numberOfChannels; channel++) {
+                        const sample = Math.max(-1, Math.min(1, channels[channel][i]));
+                        view.setInt16(offset, sample * 0x7FFF, true);
+                        offset += 2;
+                    }
+                }
+
+                return wavArrayBuffer;
+            }
+        }
+
+        // 初始化转换器
+        const ttsConverter = new TTSConverter();
+    </script>
+</body>
+</html>
